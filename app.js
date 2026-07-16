@@ -49,6 +49,30 @@
     navigator.serviceWorker.register('sw.js').catch(() => { });
   }
 
+  // Check for files shared via Web Share Target API
+  function checkSharedFiles() {
+    try {
+      const req = indexedDB.open('MetaCleanDB', 1);
+      req.onupgradeneeded = e => e.target.result.createObjectStore('SharedFiles');
+      req.onsuccess = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains('SharedFiles')) return;
+        const tx = db.transaction('SharedFiles', 'readwrite');
+        const store = tx.objectStore('SharedFiles');
+        const getReq = store.get('latest');
+        getReq.onsuccess = () => {
+          if (getReq.result && getReq.result.length > 0) {
+            handleFiles(getReq.result);
+            store.delete('latest');
+          }
+        };
+      };
+    } catch (err) {
+      console.error('IndexedDB error:', err);
+    }
+  }
+  checkSharedFiles();
+
   // Event Listeners
   [cameraInput, cameraInput2].forEach(el => {
     if (el) el.addEventListener('change', (e) => handleFiles(e.target.files));
