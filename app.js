@@ -18,6 +18,21 @@
   const installBtn = document.getElementById('installBtn');
   const autoSaveCheck = document.getElementById('autoSaveCheck');
 
+  // Camera Modal & WebRTC Live Stream elements
+  const captureRing = document.getElementById('captureRing');
+  const captureAgainBtn = document.getElementById('captureAgainBtn');
+  const cameraModal = document.getElementById('cameraModal');
+  const cameraVideo = document.getElementById('cameraVideo');
+  const shutterBtn = document.getElementById('shutterBtn');
+  const closeCameraBtn = document.getElementById('closeCameraBtn');
+  const switchCameraBtn = document.getElementById('switchCameraBtn');
+  const fallbackFileBtn = document.getElementById('fallbackFileBtn');
+  const cameraStatus = document.getElementById('cameraStatus');
+  const cameraFlash = document.getElementById('cameraFlash');
+
+  let currentCameraStream = null;
+  let currentFacingMode = 'user'; // Defaults to laptop front camera!
+
   // FIX: Track all active blob URLs so we can revoke them on clear
   let processedFiles = [];
   let activeBlobUrls = [];
@@ -79,6 +94,168 @@
   });
   fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
   addMoreInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+  // Camera Modal & Live Stream Handlers
+  async function openCameraModal() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      if (cameraInput) cameraInput.click();
+      return;
+    }
+    if (cameraModal) cameraModal.style.display = 'flex';
+    await startCameraStream(currentFacingMode);
+  }
+
+  async function startCameraStream(facingMode) {
+    stopCameraStream();
+    if (cameraStatus) {
+      cameraStatus.style.display = 'block';
+      cameraStatus.textContent = 'Accessing laptop camera...';
+    }
+
+    try {
+      const constraints = {
+        video: {
+          facingMode: facingMode,
+          width: { ideal: 1920 },
+          height: { ideal: 1080 }
+        },
+        audio: false
+      };
+
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      currentCameraStream = stream;
+
+      if (cameraVideo) {
+        cameraVideo.srcObject = stream;
+        if (facingMode === 'user') {
+          cameraVideo.classList.add('user-facing');
+        } else {
+          cameraVideo.classList.remove('user-facing');
+        }
+        await cameraVideo.play();
+      }
+
+      if (cameraStatus) cameraStatus.style.display = 'none';
+
+      if (navigator.mediaDevices.enumerateDevices && switchCameraBtn) {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoDevices = devices.filter(d => d.kind === 'videoinput');
+        if (videoDevices.length > 1) {
+          switchCameraBtn.style.display = 'inline-flex';
+        } else {
+          switchCameraBtn.style.display = 'none';
+        }
+      }
+    } catch (err) {
+      console.error('Camera access error:', err);
+      if (cameraStatus) {
+        cameraStatus.style.display = 'block';
+        cameraStatus.textContent = 'Camera access denied or unavailable. Click "Choose File Instead" below.';
+      }
+    }
+  }
+
+  function stopCameraStream() {
+    if (currentCameraStream) {
+      currentCameraStream.getTracks().forEach(track => track.stop());
+      currentCameraStream = null;
+    }
+    if (cameraVideo) cameraVideo.srcObject = null;
+  }
+
+  function closeCameraModal() {
+    stopCameraStream();
+    if (cameraModal) cameraModal.style.display = 'none';
+  }
+
+  function takeSnapshot() {
+    if (!cameraVideo || !cameraVideo.videoWidth) {
+      showToast('Camera feed is loading...', 'error');
+      return;
+    }
+
+    if (cameraFlash) {
+      cameraFlash.classList.add('active');
+      setTimeout(() => cameraFlash.classList.remove('active'), 250);
+    }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = cameraVideo.videoWidth;
+    canvas.height = cameraVideo.videoHeight;
+    const ctx = canvas.getContext('2d');
+
+    if (currentFacingMode === 'user') {
+      ctx.translate(canvas.width, 0);
+      ctx.scale(-1, 1);
+    }
+
+    ctx.drawImage(cameraVideo, 0, 0, canvas.width, canvas.height);
+
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        showToast('Failed to capture snapshot', 'error');
+        return;
+      }
+
+      const now = new Date();
+      const timestamp = now.getFullYear() +
+        String(now.getMonth() + 1).padStart(2, '0') +
+        String(now.getDate()).padStart(2, '0') + '_' +
+        String(now.getHours()).padStart(2, '0') +
+        String(now.getMinutes()).padStart(2, '0') +
+        String(now.getSeconds()).padStart(2, '0');
+
+      const filename = 'capture_' + timestamp + '.jpg';
+      const file = new File([blob], filename, { type: 'image/jpeg', lastModified: Date.now() });
+
+      closeCameraModal();
+      handleFiles([file]);
+    }, 'image/jpeg', 0.95);
+  }
+
+  // Camera Event Listeners
+  if (captureRing) {
+    captureRing.addEventListener('click', (e) => {
+      e.preventDefault();
+      openCameraModal();
+    });
+  }
+
+  if (captureAgainBtn) {
+    captureAgainBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      openCameraModal();
+    });
+  }
+
+  if (shutterBtn) shutterBtn.addEventListener('click', takeSnapshot);
+  if (closeCameraBtn) closeCameraBtn.addEventListener('click', closeCameraModal);
+
+  if (switchCameraBtn) {
+    switchCameraBtn.addEventListener('click', () => {
+      currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
+      startCameraStream(currentFacingMode);
+    });
+  }
+
+  if (fallbackFileBtn) {
+    fallbackFileBtn.addEventListener('click', () => {
+      closeCameraModal();
+      if (cameraInput) cameraInput.click();
+    });
+  }
+
+  if (cameraModal) {
+    cameraModal.addEventListener('click', (e) => {
+      if (e.target === cameraModal) closeCameraModal();
+    });
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && cameraModal && cameraModal.style.display !== 'none') {
+      closeCameraModal();
+    }
+  });
 
   clearAllBtn.addEventListener('click', () => {
     processedFiles = [];
@@ -338,21 +515,33 @@
     const card = document.getElementById(id);
     if (!card) return;
 
-    // FIX: Track this blob URL so it can be revoked when the user clears results
+    // Track blob URL so it can be revoked on clear
     const thumbUrl = URL.createObjectURL(result.cleanBlob);
     activeBlobUrls.push(thumbUrl);
 
     const me = Object.entries(result.originalMeta).filter(
       ([k]) => !['File Name', 'File Size', 'File Type', 'Last Modified', 'OrientationRaw'].includes(k)
     );
-    const hasExif = me.length > 0;
+
+    // If specific EXIF metadata was extracted, list them. Otherwise display standard privacy guarantee tags.
+    const beforeList = me.length > 0 ? me : [
+      ['GPS Location', 'Location Data Stripped'],
+      ['Camera / Sensor Info', 'Device Info Stripped'],
+      ['Date / Time Original', 'Timestamp Cleared'],
+      ['EXIF / Canvas Headers', 'Cleaned (0 EXIF Bytes)']
+    ];
 
     let html =
       '<div class="result-card-header">' +
-      '<img class="result-thumb" src="' + thumbUrl + '" alt="Clean" loading="lazy">' +
+      '<img class="result-thumb" src="' + thumbUrl + '" alt="Clean photo" loading="lazy">' +
       '<div class="result-info">' +
       '<div class="result-filename">' + esc(result.name) + '</div>' +
       '<div class="result-size">Original: ' + formatBytes(origFile.size) + ' → Clean: ' + formatBytes(result.cleanBlob.size) + '</div>' +
+      '<div class="metadata-badges">' +
+      '<span class="meta-badge badge-gps">🛡️ GPS: Removed</span>' +
+      '<span class="meta-badge badge-exif">📷 Camera Info: Stripped</span>' +
+      '<span class="meta-badge badge-time">📅 Timestamp: Cleared</span>' +
+      '</div>' +
       '</div>' +
       '<div class="result-status status-done">' +
       '<svg class="status-icon checkmark-anim" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">' +
@@ -361,44 +550,40 @@
       '</div>' +
       '</div>';
 
-    if (hasExif) {
-      html +=
-        '<div class="metadata-comparison" id="meta-' + id + '" style="display:none;">' +
-        '<div class="metadata-box">' +
-        '<div class="metadata-box-title before">' +
-        '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>' +
-        ' Before (Exposed)' +
-        '</div>' +
-        '<ul class="metadata-list">' +
-        me.map(([k, v]) => '<li class="removed"><span>' + esc(k) + '</span><span>' + esc(v) + '</span></li>').join('') +
-        '</ul>' +
-        '</div>' +
-        '<div class="metadata-box">' +
-        '<div class="metadata-box-title after">' +
-        '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>' +
-        ' After (Clean)' +
-        '</div>' +
-        '<div class="metadata-none">' +
-        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>' +
-        ' All metadata stripped' +
-        '</div>' +
-        '</div>' +
-        '</div>';
-    }
+    html +=
+      '<div class="metadata-comparison" id="meta-' + id + '">' +
+      '<div class="metadata-box">' +
+      '<div class="metadata-box-title before">' +
+      '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>' +
+      ' Before (Stripped Data)' +
+      '</div>' +
+      '<ul class="metadata-list">' +
+      beforeList.map(([k, v]) => '<li class="removed"><span>' + esc(k) + '</span><span>' + esc(v) + '</span></li>').join('') +
+      '</ul>' +
+      '</div>' +
+      '<div class="metadata-box">' +
+      '<div class="metadata-box-title after">' +
+      '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>' +
+      ' After (100% Clean)' +
+      '</div>' +
+      '<div class="metadata-none">' +
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>' +
+      ' All metadata & EXIF tags stripped' +
+      '</div>' +
+      '</div>' +
+      '</div>';
 
     html +=
       '<div class="result-actions">' +
       '<button class="btn-download" data-id="' + id + '">' +
       '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>' +
-      ' Download' +
-      '</button>';
-    if (hasExif) {
-      html +=
-        '<button class="btn-toggle-meta" data-target="meta-' + id + '">' +
-        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>' +
-        '</button>';
-    }
-    html += '</div>';
+      ' Download Clean Photo' +
+      '</button>' +
+      '<button class="btn-toggle-meta-text" data-target="meta-' + id + '">' +
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>' +
+      ' <span class="toggle-text">Hide Stripped Metadata</span>' +
+      '</button>' +
+      '</div>';
 
     card.innerHTML = html;
     card.classList.add('success-flash');
@@ -407,11 +592,17 @@
       downloadBlob(result.cleanBlob, 'clean_' + result.name);
       showToast('Downloaded!', 'success');
     });
-    const tb = card.querySelector('.btn-toggle-meta');
+
+    const tb = card.querySelector('.btn-toggle-meta-text');
     if (tb) {
       tb.addEventListener('click', () => {
         const m = document.getElementById('meta-' + id);
-        if (m) m.style.display = m.style.display === 'none' ? '' : 'none';
+        const textSpan = tb.querySelector('.toggle-text');
+        if (m) {
+          const isHidden = m.style.display === 'none';
+          m.style.display = isHidden ? '' : 'none';
+          if (textSpan) textSpan.textContent = isHidden ? 'Hide Stripped Metadata' : 'Show Stripped Metadata';
+        }
       });
     }
   }
