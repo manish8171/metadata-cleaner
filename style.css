@@ -640,38 +640,45 @@ body {
 
 .metadata-list {
   list-style: none;
-  font-size: 0.75rem;
-  color: var(--text-secondary);
+  font-size: 0.78rem;
+  color: var(--text-primary);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .metadata-list li {
-  padding: 3px 0;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.03);
   display: flex;
   justify-content: space-between;
+  align-items: center;
   gap: 8px;
+  line-height: 1.35;
 }
 
 .metadata-list li span:first-child {
-  color: var(--text-muted);
+  color: #e2e8f0 !important;
+  font-weight: 500;
   flex-shrink: 0;
 }
 
 .metadata-list li span:last-child {
   text-align: right;
   word-break: break-all;
+  font-size: 0.76rem;
 }
 
-.metadata-list li.removed {
+.metadata-list li.removed span:last-child {
+  color: #fca5a5 !important;
   text-decoration: line-through;
-  opacity: 0.5;
+  opacity: 0.95;
 }
 
-.metadata-none {
-  font-size: 0.75rem;
-  color: var(--accent-green);
-  display: flex;
-  align-items: center;
-  gap: 6px;
+.metadata-list li.clean-item span:last-child {
+  color: #6ee7b7 !important;
+  font-weight: 500;
 }
 
 .result-actions {
