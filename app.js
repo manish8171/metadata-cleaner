@@ -502,6 +502,17 @@
     return 'Embedded GPS Coordinates';
   }
 
+  function readAscii(view, offset, length) {
+    let str = '';
+    try {
+      for (let i = 0; i < length; i++) {
+        if (offset + i >= view.byteLength) break;
+        str += String.fromCharCode(view.getUint8(offset + i));
+      }
+    } catch (e) {}
+    return str;
+  }
+
   function updateResultCard(id, result, origFile) {
     const card = document.getElementById(id);
     if (!card) return;
