@@ -293,7 +293,10 @@
 
   async function handleFiles(files) {
     if (!files || files.length === 0) return;
-    const imageFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
+    const imageFiles = Array.from(files).filter(f =>
+      (f.type && f.type.startsWith('image/')) ||
+      /\.(jpg|jpeg|png|webp|gif|bmp|heic|heif)$/i.test(f.name || '')
+    );
     if (imageFiles.length === 0) { showToast('Please select image files only', 'error'); return; }
     heroSection.style.display = 'none';
     processingSection.style.display = '';
@@ -302,13 +305,11 @@
   }
 
   async function processFile(file) {
-    // FIX: Reject HEIC/HEIF with a clear explanation instead of a cryptic canvas error
     if (UNSUPPORTED_TYPES.includes(file.type)) {
       showToast('HEIC/HEIF not supported by browsers. Convert to JPEG first, then clean.', 'error');
       return;
     }
 
-    // FIX: Guard against oversized files that will crash the canvas operation
     if (file.size > MAX_FILE_SIZE_BYTES) {
       showToast(esc(file.name) + ' is too large (max 20MB). Please resize it first.', 'error');
       return;
@@ -330,6 +331,7 @@
         showToast('✅ Cleaned: ' + file.name, 'success');
       }
     } catch (err) {
+      console.error('Error processing file:', err);
       updateResultCardError(id, err.message);
     }
   }
