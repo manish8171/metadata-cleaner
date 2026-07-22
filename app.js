@@ -515,6 +515,58 @@
     return str;
   }
 
+  function stripMetadata(file, orientationRaw) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        const c = document.createElement('canvas');
+        const ctx = c.getContext('2d');
+        const width = img.naturalWidth;
+        const height = img.naturalHeight;
+        const orientation = parseInt(orientationRaw, 10) || 1;
+
+        if (orientation >= 5 && orientation <= 8) {
+          c.width = height; c.height = width;
+        } else {
+          c.width = width; c.height = height;
+        }
+
+        switch (orientation) {
+          case 2: ctx.transform(-1, 0, 0, 1, width, 0); break;
+          case 3: ctx.transform(-1, 0, 0, -1, width, height); break;
+          case 4: ctx.transform(1, 0, 0, -1, 0, height); break;
+          case 5: ctx.transform(0, 1, 1, 0, 0, 0); break;
+          case 6: ctx.transform(0, 1, -1, 0, height, 0); break;
+          case 7: ctx.transform(0, -1, -1, 0, height, width); break;
+          case 8: ctx.transform(0, -1, 1, 0, 0, width); break;
+          default: break;
+        }
+
+        ctx.drawImage(img, 0, 0);
+        URL.revokeObjectURL(url);
+        const mime = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+        const q = mime === 'image/png' ? undefined : 0.95;
+        c.toBlob((b) => b ? resolve(b) : reject(new Error('Failed to create clean image')), mime, q);
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Failed to load image')); };
+      img.src = url;
+    });
+  }
+
+  function createResultCard(id, name, size) {
+    const card = document.createElement('div');
+    card.className = 'result-card';
+    card.id = id;
+    card.innerHTML =
+      '<div class="result-card-header">' +
+      '<div class="result-thumb" style="background:var(--glass);display:flex;align-items:center;justify-content:center;"><div class="spinner"></div></div>' +
+      '<div class="result-info"><div class="result-filename">' + esc(name) + '</div><div class="result-size">Original: ' + formatBytes(size) + '</div></div>' +
+      '<div class="result-status status-cleaning"><div class="spinner"></div> Cleaning...</div>' +
+      '</div>';
+    return card;
+  }
+
   function updateResultCard(id, result, origFile) {
     const card = document.getElementById(id);
     if (!card) return;
