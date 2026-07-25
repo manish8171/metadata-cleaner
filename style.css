@@ -627,7 +627,8 @@ body {
 }
 
 .status-done {
-  color: var(--accent-green);
+  color: #047857;
+  font-weight: 700;
 }
 
 .status-icon {
@@ -645,15 +646,16 @@ body {
 .metadata-box {
   padding: 14px;
   border-radius: var(--radius-md);
-  background: rgba(0, 0, 0, 0.2);
-  border: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
 }
 
 .metadata-box-title {
-  font-size: 0.68rem;
-  font-weight: 600;
+  font-size: 0.75rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.05em;
   margin-bottom: 10px;
   display: flex;
   align-items: center;
@@ -661,11 +663,11 @@ body {
 }
 
 .metadata-box-title.before {
-  color: var(--accent-red);
+  color: #b91c1c;
 }
 
 .metadata-box-title.after {
-  color: var(--accent-green);
+  color: #047857;
 }
 
 .metadata-list {
@@ -674,23 +676,25 @@ body {
   color: var(--text-primary);
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 
 .metadata-list li {
-  padding: 4px 8px;
+  padding: 6px 10px;
   border-radius: var(--radius-sm);
-  background: rgba(255, 255, 255, 0.03);
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.06);
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 8px;
   line-height: 1.35;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
 .metadata-list li span:first-child {
-  color: #e2e8f0 !important;
-  font-weight: 500;
+  color: #09090b !important;
+  font-weight: 600;
   flex-shrink: 0;
 }
 
@@ -701,14 +705,15 @@ body {
 }
 
 .metadata-list li.removed span:last-child {
-  color: #fca5a5 !important;
+  color: #dc2626 !important;
+  font-weight: 500;
   text-decoration: line-through;
-  opacity: 0.95;
+  opacity: 1;
 }
 
 .metadata-list li.clean-item span:last-child {
-  color: #6ee7b7 !important;
-  font-weight: 500;
+  color: #047857 !important;
+  font-weight: 600;
 }
 
 .result-actions {
@@ -1375,28 +1380,32 @@ body {
 }
 
 .badge-gps {
-  background: rgba(248, 113, 113, 0.12);
-  border: 1px solid rgba(248, 113, 113, 0.25);
-  color: #fca5a5;
+  background: rgba(220, 38, 38, 0.08);
+  border: 1px solid rgba(220, 38, 38, 0.25);
+  color: #b91c1c;
+  font-weight: 600;
 }
 
 .badge-exif {
-  background: rgba(96, 165, 250, 0.12);
-  border: 1px solid rgba(96, 165, 250, 0.25);
-  color: #93c5fd;
+  background: rgba(37, 99, 235, 0.08);
+  border: 1px solid rgba(37, 99, 235, 0.25);
+  color: #1d4ed8;
+  font-weight: 600;
 }
 
 .badge-time {
-  background: rgba(52, 211, 153, 0.12);
-  border: 1px solid rgba(52, 211, 153, 0.25);
-  color: #6ee7b7;
+  background: rgba(5, 150, 105, 0.08);
+  border: 1px solid rgba(5, 150, 105, 0.25);
+  color: #047857;
+  font-weight: 600;
 }
 
 .btn-toggle-meta-text {
-  background: var(--glass);
-  border: 1px solid var(--glass-border);
-  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.14);
+  color: #09090b;
   font-size: 0.8rem;
+  font-weight: 600;
   padding: 6px 14px;
   border-radius: var(--radius-md);
   display: inline-flex;
@@ -1404,10 +1413,12 @@ body {
   gap: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
 }
 
 .btn-toggle-meta-text:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: var(--text-primary);
-  border-color: rgba(255, 255, 255, 0.18);
+  background: #ffffff;
+  color: #000000;
+  border-color: rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
 }
