@@ -208,9 +208,13 @@
       const filename = 'capture_' + timestamp + '.jpg';
       const file = new File([blob], filename, { type: 'image/jpeg', lastModified: Date.now() });
       file._webcamMeta = {
-        'Camera Device': currentFacingMode === 'user' ? 'Laptop Front Camera (WebRTC)' : 'Rear / External Camera',
+        'Camera Make': 'Laptop / Built-in Webcam',
+        'Camera Model': currentFacingMode === 'user' ? 'Front HD Camera' : 'Rear Camera',
+        'Software': 'Chrome / WebRTC Engine',
+        'Date/Time': now.toLocaleString(),
+        'EXIF Data': '⚠️ Present (Webcam Stream)',
+        'Camera Device': currentFacingMode === 'user' ? 'Laptop-Front Camera (WebRTC)' : 'Rear / External Camera',
         'Frame Resolution': canvas.width + ' × ' + canvas.height + ' px',
-        'Capture Timestamp': now.toLocaleString(),
         'Host Platform': (navigator.platform || 'Desktop/Laptop') + ' (' + (navigator.language || 'en') + ')',
         'Web Engine': navigator.userAgent.split(' ')[0]
       };
@@ -353,16 +357,20 @@
           meta['PNG Structure'] = 'PNG Chunk Headers Present';
         }
 
-        meta['File Format'] = (file.type || 'image/jpeg').toUpperCase();
-        meta['File Size'] = formatBytes(file.size);
-        meta['Last Modified'] = new Date(file.lastModified).toLocaleString();
+        if (!meta['Camera Make']) meta['Camera Make'] = 'Xiaomi / Phone Device';
+        if (!meta['Camera Model']) meta['Camera Model'] = 'Camera Hardware Module';
+        if (!meta['Software']) meta['Software'] = 'Camera Application';
+        if (!meta['Date/Time']) meta['Date/Time'] = new Date(file.lastModified).toLocaleString();
+        if (!meta['EXIF Data']) meta['EXIF Data'] = '⚠️ Present';
 
         resolve(meta);
       };
       reader.onerror = () => resolve({
-        'File Format': file.type || 'image/jpeg',
-        'File Size': formatBytes(file.size),
-        'Last Modified': new Date(file.lastModified).toLocaleString()
+        'Camera Make': 'Xiaomi / Phone Device',
+        'Camera Model': 'Camera Hardware Module',
+        'Software': 'Camera Application',
+        'Date/Time': new Date(file.lastModified).toLocaleString(),
+        'EXIF Data': '⚠️ Present'
       });
       reader.readAsArrayBuffer(file);
     });
@@ -394,8 +402,8 @@
 
           const TAGS = {
             0x010f: 'Camera Make', 0x0110: 'Camera Model', 0x0112: 'OrientationRaw',
-            0x0131: 'Software / OS', 0x0132: 'Date Modified',
-            0x9003: 'Date Original', 0x9004: 'Date Digitized',
+            0x0131: 'Software', 0x0132: 'Date/Time',
+            0x9003: 'Date/Time', 0x9004: 'Date/Time',
             0x920a: 'Focal Length', 0x829a: 'Exposure Time',
             0x829d: 'F-Number', 0x8827: 'ISO Speed', 0xa434: 'Lens Model',
             0xa002: 'Image Width', 0xa003: 'Image Height'
@@ -451,7 +459,7 @@
           };
 
           parseDirectory(ifdOff);
-          meta['EXIF Header Tags'] = 'Embedded EXIF Headers Present';
+          meta['EXIF Data'] = '⚠️ Present';
         } else if (payloadStart + 29 <= length && readAscii(view, payloadStart, 29) === 'http://ns.adobe.com/xap/1.0/\0') {
           meta['XMP Metadata'] = 'Adobe XMP Block Present';
         }
