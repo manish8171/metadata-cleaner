@@ -1,5 +1,5 @@
 // ===== MetaClean Service Worker =====
-const CACHE_NAME = 'metaclean-v8';
+const CACHE_NAME = 'metaclean-v9';
 
 const STATIC_ASSETS = [
   './',

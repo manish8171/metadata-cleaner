@@ -406,6 +406,8 @@
             0x9003: 'Date/Time', 0x9004: 'Date/Time',
             0x920a: 'Focal Length', 0x829a: 'Exposure Time',
             0x829d: 'F-Number', 0x8827: 'ISO Speed', 0xa434: 'Lens Model',
+            0x013b: 'Photographer / Artist', 0x8298: 'Copyright Notice',
+            0x9286: 'User Comments', 0xc62f: 'Camera Serial Number',
             0xa002: 'Image Width', 0xa003: 'Image Height'
           };
 
