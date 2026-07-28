@@ -97,6 +97,15 @@
 
   // Camera Modal & Live Stream Handlers
   async function openCameraModal() {
+    // Mobile devices (Android/iOS) open the native camera app directly
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+                     (window.matchMedia('(max-width: 768px)').matches && ('ontouchstart' in window || navigator.maxTouchPoints > 0));
+
+    if (isMobile) {
+      if (cameraInput) cameraInput.click();
+      return;
+    }
+
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       if (cameraInput) cameraInput.click();
       return;
